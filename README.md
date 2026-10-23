@@ -1,33 +1,40 @@
 # TFT Lab
 
-A fast, browser-based **experimental** TFT positioning sandbox. This is an initial prototype, not a fully accurate patch 18.5 simulator.
+A single-screen, browser-based TFT practice tool for **Set 18, patch 18.5**. Runs simulation and positioning search in a Web Worker so the interface stays responsive.
 
-## Run locally
+## Run
 
 ```bash
 npm install
 npm run dev
 ```
 
-## Implemented
+`npm run build` builds for static hosting. No database, authentication or Riot API key required.
 
-- 7×8 interactive board with ally and enemy units
-- Seeded, simplified auto-attack and movement simulator
-- Monte Carlo win-rate estimate
-- Candidate-search positioning optimizer
-- Responsive React interface
+## Available
 
-## Accuracy limitations
+- Search Set 18 champions, place on either half of a 7×8 board, drag/swap, change stars and equip item-stat modifiers.
+- Run individual seeded fights with a combat log, estimate outcomes over 128 fights, or position-search ~65 / 160 / 360 candidate boards.
+- Lock champions to their hex during optimization. Board state persists locally; JSON copy and import support sharing.
+- Version-pinned CommunityDragon `16.21` data loader corresponding to TFT 18.5. Cached compact roster once loaded; uses `latest` only with an explicit unverified label. If neither can be fetched, the **built-in sample roster and sample statistics** allow offline practice, labeled as unverified.
+- Position optimization uses common seeds across candidates and validates against the original placement. It is a heuristic **not a proof of optimal positioning**.
 
-This version **does not** implement patch 18.5 champion data, spells, items, traits, augments, or true TFT combat rules. Results are exploratory only. Real match simulation and authoritative patch verification are pending. No performance benchmark has been conducted.
+## Accuracy limitations (important)
 
-## Roadmap
+**Not a faithful simulation of real TFT patch 18.5 games.** Real TFT has bespoke champion spell logic, trait effects, item passives, targeting rules, augments, anomalies and economy/matchmaking mechanics. This engine simulates six-neighbor hex movement, attacks, armor/MR mitigation, mana, generic spell casts, star scaling and additive item stats. Champion ability descriptions are reference text only, **not executed**. Synergies are displayed but **not applied in combat**. All displayed simulated odds are estimates for the supplied opposing board, not empirical match win rates.
 
-1. Import validated Riot Data Dragon / CommunityDragon patch snapshots with checksums and patch provenance.
-2. Model hex targeting, collision, cast timing, mana, damage types, shields, CC, traits, items and champion abilities.
-3. Add replay-based regression fixtures and deterministic simulation tests.
-4. Move heavy simulation into Web Workers; benchmark and consider WASM if necessary.
-5. Add economy, shop odds, leveling, matchmaking and full match scenarios.
-6. Calibrate optimization against representative opponent distributions rather than one board.
+Patch 18.5 shipped October 21, 2026 and received an October 22 B-patch. The version-pinned 16.21 data files may not encode the mid-patch hotfix. Since external static sources can lag, the UI communicates data provenance; it never silently presents built-in estimates as official stats. Data loading requires external CDN access on first load.
 
-Not affiliated with Riot Games.
+## Architecture
+
+- `src/data.ts` — patch-aware static data parsing, cache, fallback and board presets
+- `src/engine.ts` — deterministic combat, batch estimates, positional optimization, validation
+- `src/worker.ts` — background computations and cancellation through Worker termination
+- `src/main.tsx` — board editor, roster, simulation controls and results
+- `src/style.css` — responsive single-screen UI
+
+## Development standards
+
+Test the simulator against known cases before using recommendations competitively. Real champion-specific ability scripts and effects need independent implementation and game-replay validation. Benchmark worker runtime on target hardware before increasing search depth. Do not remove data-provenance warnings.
+
+Data provided by [CommunityDragon](https://communitydragon.org/). TFT Lab isn't endorsed by Riot Games and doesn't reflect the views or opinions of Riot Games or anyone officially involved in producing or managing Riot Games properties.
